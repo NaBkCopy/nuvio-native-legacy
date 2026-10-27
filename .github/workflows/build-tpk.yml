@@ -45,6 +45,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Server URLs and keys are not in the source: tools/env.sh reads them from
+      # local.properties, kept whole in the LOCAL_PROPERTIES secret. Without it
+      # the app is built with an empty server and the TV never shows the login
+      # QR. --require-core fails here (names only, no values) instead.
+      - name: Write local.properties
+        env:
+          LOCAL_PROPERTIES: ${{ secrets.LOCAL_PROPERTIES }}
+        run: |
+          printf '%s\n' "$LOCAL_PROPERTIES" > local.properties
+          chmod 600 local.properties
+          tools/env.sh --require-core > /dev/null
+
       # tools/tpk.sh compiles libnuvio.so inside a linux/arm/v5 container.
       - name: Enable ARM emulation for Docker
         uses: docker/setup-qemu-action@v3
